@@ -1,8 +1,27 @@
 # Machine-Learning-IUP-Final-Project
 Repository for Machine Learning Final Project "Depression Risk Detection from Reddit Posts"
 
+## Google Colab Link:
 
-Steps to run the Prediction Test:
+https://colab.research.google.com/drive/1VtIzFAvrimphrM88xJ7ioA_jEa25krUM#scrollTo=6iYw5s58b-II
+
+### How to run?
+
+Just follow the instructions on each part of the Colab, but please change the Runtime to T4 GPU instead of CPU.
+
+steps to change the runtime:
+
+1. Click on top left arrow button to show more options for runtime
+
+ ![image](https://github.com/user-attachments/assets/6778e006-8802-45d3-b597-ea6cc0d4f5c5)
+
+2. Click "Change Runtime Type"
+3. Change to T4 GPU
+
+**NOTE:** The GPU that you use is from Google, not from your local Device. If you're using free Google Colab, your GPU usage will be limited. So please use it wisely
+
+
+## Steps to run the Prediction Test:
 
 1. Download the "bundir_tes.py", dataset.csv, and datasets folder (which contains the models, tokenizer, and config)
 2. Put the models, tokenizer, config, dataset.csv, and bundir_tes.py in the same directory.
