@@ -1,8 +1,8 @@
-# modern_gui.py
+# Prediction test
 
 import tkinter as tk
 import ttkbootstrap as ttk
-from tkinter import scrolledtext
+from tkinter import scrolledtext, filedialog, messagebox
 import tensorflow as tf
 import numpy as np
 import json
@@ -23,10 +23,9 @@ try:
     with open('config.json') as f:
         config = json.load(f)
         MAX_LEN = config['max_len']
-    print("--- Models and info loaded successfully. ---")
+    print("--- Models and info loaded successfully. Ready to launch GUI. ---")
 except Exception as e:
     print(f"Error loading files: {e}")
-    print("Please make sure cnn_model.keras, bilstm_model.keras, tokenizer.json, and config.json are in the same folder.")
     exit()
 
 # --- 2. Helper and Prediction Functions ---
@@ -48,13 +47,9 @@ def predict_message(message):
 
 # --- 3. GUI Application Logic ---
 def get_risk_style(score):
-    """Returns a text label and ttkbootstrap style based on the score."""
-    if score < 0.4:
-        return "Low Risk", "success"  # Green
-    elif score < 0.7:
-        return "Moderate Risk", "warning" # Orange
-    else:
-        return "High Risk", "danger"   # Red
+    if score < 0.4: return "Low Risk", "success"
+    elif score < 0.7: return "Moderate Risk", "warning"
+    else: return "High Risk", "danger"
 
 def handle_prediction():
     user_text = text_area.get("1.0", "end").strip()
@@ -66,20 +61,19 @@ def handle_prediction():
     root.update_idletasks()
 
     cnn_p, bilstm_p = predict_message(user_text)
+    update_results(cnn_p, bilstm_p)
+    status_var.set("Status: Ready")
 
-    # Update CNN results
+def update_results(cnn_p, bilstm_p):
     cnn_risk_text, cnn_style = get_risk_style(cnn_p)
     cnn_result_var.set(f"CNN Prediction: {cnn_p*100:.2f}% ({cnn_risk_text})")
     cnn_result_label.configure(bootstyle=f"{cnn_style}")
     cnn_progress_bar.configure(bootstyle=f"{cnn_style}", value=cnn_p * 100)
     
-    # Update Bi-LSTM results
     bilstm_risk_text, bilstm_style = get_risk_style(bilstm_p)
     bilstm_result_var.set(f"Bi-LSTM Prediction: {bilstm_p*100:.2f}% ({bilstm_risk_text})")
     bilstm_result_label.configure(bootstyle=f"{bilstm_style}")
     bilstm_progress_bar.configure(bootstyle=f"{bilstm_style}", value=bilstm_p * 100)
-
-    status_var.set("Status: Ready")
 
 def clear_fields():
     text_area.delete("1.0", "end")
@@ -91,58 +85,96 @@ def clear_fields():
     bilstm_progress_bar.configure(bootstyle="secondary", value=0)
     status_var.set("Status: Ready")
 
-# --- 4. Create the GUI Window and Widgets ---
+# --- 4. NEW: Menu Bar Functions ---
+def open_text_file():
+    filepath = filedialog.askopenfilename(filetypes=[("Text Files", "*.txt"), ("All files", "*.*")])
+    if not filepath:
+        return
+    clear_fields()
+    with open(filepath, 'r', encoding='utf-8') as f:
+        text_area.insert("1.0", f.read())
+    status_var.set(f"Loaded: {os.path.basename(filepath)}")
 
-# Use ttk.Window to create a themed window.
-# You can change "superhero" to other themes!
-root = ttk.Window(themename="superhero")
-root.title("Depression Detector GUI")
-root.geometry("600x475")
-root.columnconfigure(0, weight=1)
-root.rowconfigure(0, weight=1)
+def save_results():
+    filepath = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text Files", "*.txt"), ("All files", "*.*")])
+    if not filepath:
+        return
+    with open(filepath, 'w', encoding='utf-8') as f:
+        f.write("--- Analyzed Text ---\n")
+        f.write(text_area.get("1.0", "end").strip())
+        f.write("\n\n--- Prediction Results ---\n")
+        f.write(cnn_result_var.get() + "\n")
+        f.write(bilstm_result_var.get() + "\n")
+    status_var.set(f"Results saved to: {os.path.basename(filepath)}")
 
+def show_about():
+    messagebox.showinfo("About Depression Risk Detector", "Machine Learning (I)) Final Project\n\nThis application uses AI models (CNN and Bi-LSTM) to analyze text and predict the likelihood of it being related to depression.\n\nGroup Members:\n1. Alfa Radithya Fanany - 5025231008\n2. Muhammad Iqbal Shafarel - 5025231080\n3. Faiz Adli Nugraha - 5025231174")
+
+# --- 5. Create the GUI Window and Widgets ---
+root = ttk.Window(themename="vapor")
+root.title("Depression Risk Detector")
+root.geometry("600x525")
+
+# --- NEW: Create Menu Bar ---
+menubar = ttk.Menu(root)
+root.config(menu=menubar)
+
+# File Menu
+file_menu = ttk.Menu(menubar, tearoff=False)
+menubar.add_cascade(label="File", menu=file_menu)
+file_menu.add_command(label="Open Text File...", command=open_text_file)
+file_menu.add_command(label="Save Results...", command=save_results)
+file_menu.add_separator()
+file_menu.add_command(label="Exit", command=root.quit)
+
+# Themes Menu
+style = ttk.Style()
+theme_menu = ttk.Menu(menubar, tearoff=False)
+menubar.add_cascade(label="Themes", menu=theme_menu)
+for theme in sorted(style.theme_names()):
+    theme_menu.add_radiobutton(label=theme, command=lambda t=theme: style.theme_use(t))
+
+# Help Menu
+help_menu = ttk.Menu(menubar, tearoff=False)
+menubar.add_cascade(label="Help", menu=help_menu)
+help_menu.add_command(label="About...", command=show_about)
+
+
+# --- Main content frame (same as before) ---
 main_frame = ttk.Frame(root, padding="15")
-main_frame.grid(row=0, column=0, sticky="nsew")
+main_frame.pack(fill="both", expand=True)
 main_frame.columnconfigure(0, weight=1)
 
-# --- Input Area ---
+# (The rest of the widgets are the same as the previous script)
 input_frame = ttk.LabelFrame(main_frame, text="Enter Text to Analyze", padding="10")
 input_frame.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 10))
 input_frame.columnconfigure(0, weight=1)
-
 text_area = scrolledtext.ScrolledText(input_frame, wrap="word", height=10, font=("Segoe UI", 10))
 text_area.grid(row=0, column=0, sticky="nsew")
 
-# --- Button Area ---
 button_frame = ttk.Frame(main_frame)
-button_frame.grid(row=1, column=0, columnspan=2, pady=10)
-
+button_frame.grid(row=1, column=0, columnspan=2, pady=5)
 predict_button = ttk.Button(button_frame, text="Predict", command=handle_prediction, bootstyle="primary", width=15)
 predict_button.pack(side="left", padx=5)
-
 clear_button = ttk.Button(button_frame, text="Clear", command=clear_fields, bootstyle="secondary", width=15)
 clear_button.pack(side="left", padx=5)
 
-# --- Results Area ---
 results_frame = ttk.LabelFrame(main_frame, text="Results", padding="10")
 results_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(10, 0))
 results_frame.columnconfigure(0, weight=1)
 
-# CNN Results
 cnn_result_var = tk.StringVar(value="CNN Prediction: -")
 cnn_result_label = ttk.Label(results_frame, textvariable=cnn_result_var, font=("Segoe UI", 12, "bold"), bootstyle="secondary")
 cnn_result_label.grid(row=0, column=0, sticky="w", pady=(5,0))
 cnn_progress_bar = ttk.Progressbar(results_frame, bootstyle="secondary-striped", length=300)
 cnn_progress_bar.grid(row=1, column=0, sticky="ew", pady=(5, 10), padx=5)
 
-# Bi-LSTM Results
 bilstm_result_var = tk.StringVar(value="Bi-LSTM Prediction: -")
 bilstm_result_label = ttk.Label(results_frame, textvariable=bilstm_result_var, font=("Segoe UI", 12, "bold"), bootstyle="secondary")
 bilstm_result_label.grid(row=2, column=0, sticky="w", pady=5)
 bilstm_progress_bar = ttk.Progressbar(results_frame, bootstyle="secondary-striped", length=300)
 bilstm_progress_bar.grid(row=3, column=0, sticky="ew", pady=(5, 10), padx=5)
 
-# --- Status Bar ---
 status_var = tk.StringVar(value="Status: Ready")
 status_bar = ttk.Label(main_frame, textvariable=status_var, relief="sunken", anchor="w", padding=5)
 status_bar.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(15, 0))
