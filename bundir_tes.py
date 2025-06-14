@@ -1,5 +1,3 @@
-# Prediction test
-
 import tkinter as tk
 import ttkbootstrap as ttk
 from tkinter import scrolledtext, filedialog, messagebox
@@ -85,7 +83,7 @@ def clear_fields():
     bilstm_progress_bar.configure(bootstyle="secondary", value=0)
     status_var.set("Status: Ready")
 
-# --- 4. NEW: Menu Bar Functions ---
+# --- 4. Menu Bar Functions ---
 def open_text_file():
     filepath = filedialog.askopenfilename(filetypes=[("Text Files", "*.txt"), ("All files", "*.*")])
     if not filepath:
@@ -115,7 +113,7 @@ root = ttk.Window(themename="vapor")
 root.title("Depression Risk Detector")
 root.geometry("600x525")
 
-# --- NEW: Create Menu Bar ---
+# --- Create Menu Bar ---
 menubar = ttk.Menu(root)
 root.config(menu=menubar)
 
@@ -139,13 +137,9 @@ help_menu = ttk.Menu(menubar, tearoff=False)
 menubar.add_cascade(label="Help", menu=help_menu)
 help_menu.add_command(label="About...", command=show_about)
 
-
-# --- Main content frame (same as before) ---
 main_frame = ttk.Frame(root, padding="15")
 main_frame.pack(fill="both", expand=True)
-main_frame.columnconfigure(0, weight=1)
-
-# (The rest of the widgets are the same as the previous script)
+main_frame.columnconfigure(0, weight=1) 
 input_frame = ttk.LabelFrame(main_frame, text="Enter Text to Analyze", padding="10")
 input_frame.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 10))
 input_frame.columnconfigure(0, weight=1)
